@@ -1,249 +1,143 @@
-import React, { useCallback, useState } from "react";
-import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
-  BackgroundVariant,
-  Edge,
-  Node,
-  Connection,
-  useReactFlow,
-  NodeChange,
-  EdgeChange,
-  applyNodeChanges,
-  applyEdgeChanges,
-  Panel,
-  NodeTypes,
-  EdgeTypes,
-} from "reactflow";
-import "reactflow/dist/style.css";
-
-import Sidebar from "./Sidebar";
+import React from "react";
+import { MoreHorizontal } from "lucide-react";
 import { useFlowchart } from "../contexts/FlowchartContext";
-import StartNode from "./nodes/StartNode";
-import ProcessNode from "./nodes/ProcessNode";
-import DecisionNode from "./nodes/DecisionNodes";
-import EndNode from "./nodes/EndNode";
-import IONode from "./nodes/IONode";
-import CustomEdge from "./edges/CustomEdge";
-import NodeProperties from "./properties/NodeProperties";
-import EdgeProperties from "./properties/EdgeProperties";
-import { useToast } from "../hooks/useToast";
+import { FileText, Trash2 } from "lucide-react";
 
-const nodeTypes: NodeTypes = {
-  start: StartNode,
-  process: ProcessNode,
-  decision: DecisionNode,
-  end: EndNode,
-  io: IONode,
-};
+const Sidebar: React.FC = () => {
 
-const edgeTypes: EdgeTypes = {
-  custom: CustomEdge,
-};
-
-const FlowchartEditor: React.FC = () => {
-  const reactFlowInstance = useReactFlow();
-  const {
-    nodes,
-    edges,
-    updateNodes,
-    updateEdges,
-    currentFlowchart,
-    setNodes,
-    setEdges,
-    validateFlowchart,
-  } = useFlowchart();
-  const { toast } = useToast();
-
-  const [selectedElement, setSelectedElement] = useState<{
-    type: "node" | "edge";
-    id: string;
-  } | null>(null);
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      updateNodes(applyNodeChanges(changes, nodes));
-    },
-    [nodes, updateNodes]
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      updateEdges(applyEdgeChanges(changes, edges));
-    },
-    [edges, updateEdges]
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      // Add default edge type
-      const newEdge: Edge = {
-        ...connection,
-        id: `e${connection.source}-${connection.target}`,
-        type: "custom",
-        data: { label: "" },
-        animated: false,
-      };
-      updateEdges((eds) => [...eds, newEdge]);
-    },
-    [updateEdges]
-  );
-
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedElement({ type: "node", id: node.id });
-  }, []);
-
-  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
-    setSelectedElement({ type: "edge", id: edge.id });
-  }, []);
-
-  const onPaneClick = useCallback(() => {
-    setSelectedElement(null);
-  }, []);
-
-  const onValidate = useCallback(() => {
-    const validationResult = validateFlowchart();
-    if (validationResult.valid) {
-      toast({
-        title: "Validation Successful",
-        description: "Your flowchart is valid!",
-        type: "success",
-      });
-    } else {
-      toast({
-        title: "Validation Failed",
-        description: validationResult.message,
-        type: "error",
-      });
-    }
-  }, [validateFlowchart, toast]);
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-
-      const nodeType = event.dataTransfer.getData("application/reactflow/type");
-      if (!nodeType) return;
-
-      const reactFlowBounds = (event.target as HTMLDivElement)
-        .closest(".react-flow__renderer")
-        ?.getBoundingClientRect();
-
-      if (!reactFlowBounds) return;
-
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-
-      let newNode: Node = {
-        id: `${nodeType}_${Date.now()}`,
-        type: nodeType,
-        position,
-        data: {
-          label: `New ${nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}`,
-        },
-      };
-
-      setNodes((nds) => [...nds, newNode]);
-    },
-    [reactFlowInstance, setNodes]
-  );
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData("application/reactflow/type", nodeType);
+    event.dataTransfer.effectAllowed = "move";
+  };
 
   return (
-    <div className="flex h-full">
-      <Sidebar />
-      <div className="flex-1 h-full flex flex-col">
-        <div className="flex-1">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            onEdgeClick={onEdgeClick}
-            onPaneClick={onPaneClick}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            fitView
-            snapToGrid
-            snapGrid={[8, 8]}
-            defaultEdgeOptions={{
-              type: "custom",
-              animated: false,
-            }}
+    <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold mb-4">Flowchart Elements</h2>
+        <div className="space-y-2">
+          <div
+            className="flex items-center p-2 bg-accent-100 dark:bg-accent-900/30 border border-accent-200 dark:border-accent-700 rounded-md cursor-move hover:bg-accent-200 dark:hover:bg-accent-800/50 transition-colors"
+            draggable
+            onDragStart={(e) => onDragStart(e, "start")}
           >
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-            <Controls />
-            <MiniMap
-              nodeStrokeWidth={3}
-              zoomable
-              pannable
-              nodeColor={(node) => {
-                switch (node.type) {
-                  case "start":
-                    return "#10B981";
-                  case "process":
-                    return "#3B82F6";
-                  case "decision":
-                    return "#F59E0B";
-                  case "end":
-                    return "#EF4444";
-                  case "io":
-                    return "#8B5CF6";
-                  default:
-                    return "#64748B";
-                }
-              }}
-            />
-            <Panel position="top-center" className="mt-2">
-              <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2 flex items-center space-x-2">
-                <span className="text-sm font-medium">
-                  {currentFlowchart?.name || "Untitled Flowchart"}
-                </span>
-                {currentFlowchart?.modified && (
-                  <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-0.5 rounded">
-                    Modified
-                  </span>
-                )}
-                <button
-                  onClick={onValidate}
-                  className="ml-4 bg-primary-500 hover:bg-primary-600 text-white py-1 px-3 text-sm rounded transition-colors"
-                >
-                  Validate
-                </button>
-              </div>
-            </Panel>
-          </ReactFlow>
-        </div>
-
-        {selectedElement && (
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 h-auto max-h-64 overflow-y-auto">
-            {selectedElement.type === "node" ? (
-              <NodeProperties
-                nodeId={selectedElement.id}
-                onClose={() => setSelectedElement(null)}
-              />
-            ) : (
-              <EdgeProperties
-                edgeId={selectedElement.id}
-                onClose={() => setSelectedElement(null)}
-              />
-            )}
+            <div className="w-8 h-8 rounded-full bg-accent-500 flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold">Start</span>
+            </div>
+            <span className="text-sm font-medium">Start</span>
           </div>
-        )}
+
+          <div
+            className="flex items-center p-2 bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-md cursor-move hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors"
+            draggable
+            onDragStart={(e) => onDragStart(e, "process")}
+          >
+            <div className="w-8 h-8 rounded-md bg-primary-500 flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold">Proc</span>
+            </div>
+            <span className="text-sm font-medium">Process</span>
+          </div>
+
+          <div
+            className="flex items-center p-2 bg-warning-100 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-700 rounded-md cursor-move hover:bg-warning-200 dark:hover:bg-warning-800/50 transition-colors"
+            draggable
+            onDragStart={(e) => onDragStart(e, "decision")}
+          >
+            <div className="w-8 h-8 transform rotate-45 bg-warning-500 flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold transform -rotate-45">
+                ?
+              </span>
+            </div>
+            <span className="text-sm font-medium">Decision</span>
+          </div>
+
+          <div
+            className="flex items-center p-2 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-md cursor-move hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors"
+            draggable
+            onDragStart={(e) => onDragStart(e, "io")}
+          >
+            <div className="w-8 h-8 parallelogram bg-purple-500 flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold">I/O</span>
+            </div>
+            <span className="text-sm font-medium">Input/Output</span>
+          </div>
+
+          <div
+            className="flex items-center p-2 bg-error-100 dark:bg-error-900/30 border border-error-200 dark:border-error-700 rounded-md cursor-move hover:bg-error-200 dark:hover:bg-error-800/50 transition-colors"
+            draggable
+            onDragStart={(e) => onDragStart(e, "end")}
+          >
+            <div className="w-8 h-8 rounded-full bg-error-500 flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold">End</span>
+            </div>
+            <span className="text-sm font-medium">End</span>
+          </div>
+        </div>
       </div>
+
+      {/* <div className="p-4 flex-1 overflow-y-auto">
+        <h2 className="text-lg font-semibold mb-2 flex justify-between items-center">
+          <span>Saved Flowcharts</span>
+          <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+            {savedFlowcharts.length}
+          </span>
+        </h2>
+
+        {savedFlowcharts.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <FileText size={40} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No saved flowcharts</p>
+            <p className="text-xs mt-1">
+              Create and save your first flowchart!
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {savedFlowcharts.map((flowchart) => (
+              <li
+                key={flowchart.id}
+                className="p-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+              >
+                <div className="flex justify-between items-center">
+                  <button
+                    className="flex-1 text-left text-sm font-medium truncate"
+                    onClick={() => loadSavedFlowchart(flowchart.id)}
+                  >
+                    {flowchart.name || "Untitled Flowchart"}
+                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          window.confirm(
+                            `Delete "${
+                              flowchart.name || "Untitled Flowchart"
+                            }"?`
+                          )
+                        ) {
+                          deleteFlowchart(flowchart.id);
+                        }
+                      }}
+                      className="p-1 text-gray-500 hover:text-error-500 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {new Date(flowchart.updatedAt).toLocaleString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div> */}
+
+      {/* <div className="w-8 h-8 bg-purple-500 flex items-center justify-center mr-3 skew-x-[-12deg]">
+        <span className="text-white text-xs font-bold skew-x-[12deg]">I/O</span>
+      </div> */}
     </div>
   );
 };
 
-export default FlowchartEditor;
+export default Sidebar;

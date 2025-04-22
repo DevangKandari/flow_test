@@ -4,6 +4,7 @@ import {
   EdgeLabelRenderer,
   EdgeProps,
   getBezierPath,
+  getSmoothStepPath,
 } from "reactflow";
 
 const CustomEdge: FC<EdgeProps> = ({

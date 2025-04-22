@@ -1,68 +1,14 @@
 import React, { useState } from "react";
-import {
-  Moon,
-  Sun,
-  Save,
-  FolderOpen,
-  FileDown,
-  Settings,
-  PlusCircle,
-  Trash2,
-  HelpCircle,
-} from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { useFlowchart } from "../contexts/FlowchartContext";
 import { useToast } from "../hooks/useToast";
 
 const AppHeader: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
   const {
-    saveFlowchart,
-    loadFlowchart,
-    exportFlowchart,
     newFlowchart,
     currentFlowchart,
   } = useFlowchart();
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
-
-  const toggleTheme = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-    setDarkMode(!darkMode);
-  };
-
-  React.useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await saveFlowchart();
-      toast({
-        title: "Success",
-        description: "Flowchart saved successfully",
-        type: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save flowchart",
-        type: "error",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleNew = () => {
     if (
@@ -77,50 +23,6 @@ const AppHeader: React.FC = () => {
         type: "info",
       });
     }
-  };
-
-  const handleExport = async () => {
-    try {
-      await exportFlowchart();
-      toast({
-        title: "Success",
-        description: "Flowchart exported successfully",
-        type: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export flowchart",
-        type: "error",
-      });
-    }
-  };
-
-  const handleImport = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = async (e: Event) => {
-      const file = (e.target as HTMLInputElement)?.files?.[0];
-      if (file) {
-        try {
-          const content = await file.text();
-          loadFlowchart(JSON.parse(content));
-          toast({
-            title: "Success",
-            description: "Flowchart imported successfully",
-            type: "success",
-          });
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to import flowchart",
-            type: "error",
-          });
-        }
-      }
-    };
-    input.click();
   };
 
   return (
@@ -195,13 +97,13 @@ const AppHeader: React.FC = () => {
         >
           <PlusCircle size={20} />
         </button>
-        <button
+        {/* <button
           onClick={handleSave}
           className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           title="Save Flowchart"
           disabled={isSaving}
-        >
-          <Save size={20} className={isSaving ? "animate-pulse" : ""} />
+        > */}
+        {/* <Save size={20} className={isSaving ? "animate-pulse" : ""} />
         </button>
         <button
           onClick={handleImport}
@@ -230,7 +132,7 @@ const AppHeader: React.FC = () => {
           title="Help"
         >
           <HelpCircle size={20} />
-        </button>
+        </button> */}
       </div>
     </header>
   );

@@ -22,18 +22,18 @@ import Sidebar from "./Sidebar";
 import { useFlowchart } from "../contexts/FlowchartContext";
 import StartNode from "./nodes/StartNode";
 import ProcessNode from "./nodes/ProcessNode";
-import DecisionNodes from "./nodes/DecisionNodes";
 import EndNode from "./nodes/EndNode";
 import IONode from "./nodes/IONode";
 import CustomEdge from "./edges/CustomEdge";
 import NodeProperties from "./properties/NodeProperties";
 import EdgeProperties from "./properties/EdgeProperties";
 import { useToast } from "../hooks/useToast";
+import DecisionNode from "./nodes/DecisionNode";
 
 const nodeTypes: NodeTypes = {
   start: StartNode,
   process: ProcessNode,
-  decision: DecisionNodes,
+  decision: DecisionNode,
   end: EndNode,
   io: IONode,
 };
@@ -77,17 +77,15 @@ const FlowchartEditor: React.FC = () => {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = connection;
-
-      if (!source || !target) return;
+      if (!connection.source || !connection.target) return;
 
       const newEdge: Edge = {
-        id: `e${source}-${target}-${Date.now()}`,
-        source,
-        target,
+        id: `e${connection.source}-${connection.target}`,
         type: "custom",
-        sourceHandle: sourceHandle ?? null,
-        targetHandle: targetHandle ?? null,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle ?? undefined,
+        targetHandle: connection.targetHandle ?? undefined,
         data: { label: "" },
         animated: false,
       };
@@ -190,38 +188,13 @@ const FlowchartEditor: React.FC = () => {
             }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-            <Controls />
-            <MiniMap
-              nodeStrokeWidth={3}
-              zoomable
-              pannable
-              nodeColor={(node) => {
-                switch (node.type) {
-                  case "start":
-                    return "#10B981";
-                  case "process":
-                    return "#3B82F6";
-                  case "decision":
-                    return "#F59E0B";
-                  case "end":
-                    return "#EF4444";
-                  case "io":
-                    return "#8B5CF6";
-                  default:
-                    return "#64748B";
-                }
-              }}
-            />
+            {/* <Controls /> */}
+
             <Panel position="top-center" className="mt-2">
               <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg px-4 py-2 flex items-center space-x-2">
                 <span className="text-sm font-medium">
                   {currentFlowchart?.name || "Untitled Flowchart"}
                 </span>
-                {currentFlowchart?.modified && (
-                  <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-0.5 rounded">
-                    Modified
-                  </span>
-                )}
                 <button
                   onClick={onValidate}
                   className="ml-4 bg-primary-500 hover:bg-primary-600 text-white py-1 px-3 text-sm rounded transition-colors"
